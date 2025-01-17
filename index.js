@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const jwt = require("jsonwebtoken");
 
@@ -8,8 +9,31 @@ const port = process.env.PORT || 5000;
 const app = express();
 
 // middleware
-app.use(cors());
+const corsOptions = {
+  origin: ["http://localhost:5176"],
+  credentials: true,
+  optionSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
+
+/* verify token */
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      console.log(err);
+      return res.status(401).send({ message: "unauthorized access" });
+    }
+    req.user = decoded;
+    next();
+  });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.07iu7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -29,6 +53,7 @@ async function run() {
 
     const db = client.db("paw-hopeDB");
     const userCollection = db.collection("users");
+    const petsCollection = db.collection("pets");
 
     //Generate JWT token
     app.post("/jwt", async (req, res) => {
@@ -59,6 +84,26 @@ async function run() {
         res.status(500).send(err);
       }
     });
+
+    //save/update user in db
+    app.post("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const query = { email };
+
+      //Check if user exists in db
+      const isExist = await userCollection.findOne(query);
+      if (isExist) {
+        return res.send(isExist);
+      }
+
+      const result = await userCollection.insertOne({
+        ...user,
+        role: "user",
+      });
+    });
+
+    
 
     /* ------------------------------------------------ */
     // Send a ping to confirm a successful connection
