@@ -10,17 +10,17 @@ const app = express();
 
 // middleware
 const corsOptions = {
-  origin: ["http://localhost:5176"],
+  origin: ["http://localhost:5173"],
   credentials: true,
   optionSuccessStatus: 200,
 };
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors(corsOptions));
 
 /* verify token */
 const verifyToken = async (req, res, next) => {
-  const token = req.cookies?.token;
+  const token = req.cookies?.access_token;
 
   if (!token) {
     return res.status(401).send({ message: "unauthorized access" });
@@ -101,12 +101,35 @@ async function run() {
         ...user,
         role: "user",
       });
+      res.send(result);
     });
 
-    //add a pet
+    //get pets from db
+    app.get("/pets", async (req, res) => {
+      const result = await petsCollection
+        .find({ adopted: false })
+        .sort({ timestamp: -1 })
+        .toArray();
+
+      res.send(result);
+    });
+
+    //get pets for specific user
+    app.get("/pets/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const query = { "petOwner.email": email };
+      const result = await petsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //add a pet in db
     app.post("/pets", verifyToken, async (req, res) => {
       const petData = req.body;
-      const result = await petsCollection.insertOne(petData);
+      const result = await petsCollection.insertOne({
+        ...petData,
+        timestamp: Date.now(),
+        adopted: false,
+      });
       res.send(result);
     });
 
