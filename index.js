@@ -103,7 +103,12 @@ async function run() {
       });
     });
 
-    
+    //add a pet
+    app.post("/pets", verifyToken, async (req, res) => {
+      const petData = req.body;
+      const result = await petsCollection.insertOne(petData);
+      res.send(result);
+    });
 
     /* ------------------------------------------------ */
     // Send a ping to confirm a successful connection
