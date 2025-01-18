@@ -145,7 +145,7 @@ async function run() {
       const query = { _id: new ObjectId(id) };
 
       const result = await petsCollection.findOne(query);
-     
+      res.send(result);
     });
 
     //add a pet in db
