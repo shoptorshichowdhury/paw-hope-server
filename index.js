@@ -179,6 +179,14 @@ async function run() {
       res.send(result);
     });
 
+    //get single donation campaign
+    app.get("/donation-campaign/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await donationCampaigns.findOne(query);
+      res.send(result);
+    });
+
     //save donation campaign in db
     app.post("/donation-campaigns", verifyToken, async (req, res) => {
       const donationData = req.body;
