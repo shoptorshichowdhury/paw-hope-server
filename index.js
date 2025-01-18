@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 
 const port = process.env.PORT || 5000;
@@ -10,7 +10,7 @@ const app = express();
 
 // middleware
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  origin: ["http://localhost:5173", "http://localhost:5176"],
   credentials: true,
   optionSuccessStatus: 200,
 };
@@ -104,10 +104,27 @@ async function run() {
       res.send(result);
     });
 
-    //get pets from db
+    //get all pets from db
     app.get("/pets", async (req, res) => {
+      const filter = req.query.filter;
+      const search = req.query.search;
+      let query = { adopted: false };
+
+      //For search
+      if (search) {
+        query.name = {
+          $regex: search,
+          $options: "i",
+        };
+      }
+
+      //For filter (category)
+      if (filter) {
+        query.category = filter;
+      }
+
       const result = await petsCollection
-        .find({ adopted: false })
+        .find(query)
         .sort({ timestamp: -1 })
         .toArray();
 
@@ -120,6 +137,15 @@ async function run() {
       const query = { "petOwner.email": email };
       const result = await petsCollection.find(query).toArray();
       res.send(result);
+    });
+
+    //get single pet data
+    app.get("/pet/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+
+      const result = await petsCollection.findOne(query);
+     
     });
 
     //add a pet in db
