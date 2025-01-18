@@ -55,6 +55,7 @@ async function run() {
     const userCollection = db.collection("users");
     const petsCollection = db.collection("pets");
     const adoptionRequests = db.collection("adopt-requests");
+    const donationCampaigns = db.collection("donation-campaigns");
 
     //Generate JWT token
     app.post("/jwt", async (req, res) => {
@@ -105,6 +106,7 @@ async function run() {
       res.send(result);
     });
 
+    /* ---------------pets---------------- */
     //get all pets from db
     app.get("/pets", async (req, res) => {
       const filter = req.query.filter;
@@ -166,6 +168,18 @@ async function run() {
       const result = await adoptionRequests.insertOne(adoptionRequestData);
       res.send(result);
     });
+
+    /* ----------------------donation------------------------ */
+    //save donation campaign in db
+    app.post("/donation-campaigns", async (req, res) => {
+      const donationData = req.body;
+      const result = await donationCampaigns.insertOne({
+        ...donationData,
+        timestamp: Date.now(),
+      });
+      res.send(result);
+    });
+
 
     /* ------------------------------------------------ */
     // Send a ping to confirm a successful connection
