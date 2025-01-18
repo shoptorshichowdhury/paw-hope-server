@@ -56,6 +56,7 @@ async function run() {
     const petsCollection = db.collection("pets");
     const adoptionRequests = db.collection("adopt-requests");
     const donationCampaigns = db.collection("donation-campaigns");
+    const donations = db.collection("donations");
 
     //Generate JWT token
     app.post("/jwt", async (req, res) => {
@@ -196,6 +197,49 @@ async function run() {
       });
       res.send(result);
     });
+
+    //git commit--[change this]
+    //save donation in db
+    app.post("/donations", verifyToken, async (req, res) => {
+      const { campaignId, donationAmount, donator } = req.body;
+      const query = { _id: new ObjectId(campaignId) };
+
+      //check the campaign status
+      const campaign = await donationCampaigns.findOne(query);
+      if (campaign.status === "Paused") 
+        return res.status(400).send({
+          message: "This campaign is paused now. Donation are not allowed!",
+        });
+
+      //add the donation in donation collection
+      const donationInfo = { campaignId, donationAmount, donator };
+      const result = await donations.insertOne(donationInfo);
+      res.send(result);
+    });
+
+    //Change the donated amount (donation campaign)
+    app.patch(
+      "/donation-campaign/donatedAmount/:id",
+      verifyToken,
+      async (req, res) => {
+        const id = req.params.id;
+        const { donationAmount, status } = req.body;
+        const filter = { _id: new ObjectId(id) };
+
+        if (status === "decrease") {
+          let updateDoc = {
+            $inc: { donatedAmount: -donationAmount },
+          };
+        } else {
+          updateDoc = {
+            $inc: { donatedAmount: donationAmount },
+          };
+        }
+
+        const result = await donationCampaigns.updateOne(filter, updateDoc);
+        res.send(result);
+      }
+    );
 
     /* ------------------------------------------------ */
     // Send a ping to confirm a successful connection
