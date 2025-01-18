@@ -54,6 +54,7 @@ async function run() {
     const db = client.db("paw-hopeDB");
     const userCollection = db.collection("users");
     const petsCollection = db.collection("pets");
+    const adoptionRequests = db.collection("adopt-requests");
 
     //Generate JWT token
     app.post("/jwt", async (req, res) => {
@@ -156,6 +157,13 @@ async function run() {
         timestamp: Date.now(),
         adopted: false,
       });
+      res.send(result);
+    });
+
+    //save adoption request to db
+    app.post("/adoption-requests", verifyToken, async (req, res) => {
+      const adoptionRequestData = req.body;
+      const result = await adoptionRequests.insertOne(adoptionRequestData);
       res.send(result);
     });
 
