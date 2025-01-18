@@ -206,7 +206,7 @@ async function run() {
 
       //check the campaign status
       const campaign = await donationCampaigns.findOne(query);
-      if (campaign.status === "Paused") 
+      if (campaign.status === "Paused")
         return res.status(400).send({
           message: "This campaign is paused now. Donation are not allowed!",
         });
@@ -240,6 +240,13 @@ async function run() {
         res.send(result);
       }
     );
+
+    //active 3 donations (donation details page)
+    app.get("/active-donations", async (req, res) => {
+      const query = { status: "Active" };
+      const result = await donationCampaigns.find(query).limit(3).toArray();
+      res.send(result);
+    });
 
     /* ------------------------------------------------ */
     // Send a ping to confirm a successful connection
