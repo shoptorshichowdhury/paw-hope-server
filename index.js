@@ -170,8 +170,17 @@ async function run() {
     });
 
     /* ----------------------donation------------------------ */
+    //get all donation campaigns
+    app.get("/donation-campaigns", async (req, res) => {
+      const result = await donationCampaigns
+        .find()
+        .sort({ timestamp: -1 })
+        .toArray();
+      res.send(result);
+    });
+
     //save donation campaign in db
-    app.post("/donation-campaigns", async (req, res) => {
+    app.post("/donation-campaigns", verifyToken, async (req, res) => {
       const donationData = req.body;
       const result = await donationCampaigns.insertOne({
         ...donationData,
@@ -179,7 +188,6 @@ async function run() {
       });
       res.send(result);
     });
-
 
     /* ------------------------------------------------ */
     // Send a ping to confirm a successful connection
