@@ -243,6 +243,7 @@ async function run() {
       const donationData = req.body;
       const result = await donationCampaigns.insertOne({
         ...donationData,
+        status: "Active",
         timestamp: Date.now(),
       });
       res.send(result);
@@ -317,6 +318,26 @@ async function run() {
       const email = req.params.email;
       const query = { "donator.email": email };
       const result = await donations.find(query).toArray();
+      res.send(result);
+    });
+
+    //update a donation campaign
+    app.put("/update-donation-campaign/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const donationInfo = req.body;
+      const filter = { _id: new ObjectId(id) };
+
+      const updateDoc = {
+        $set: {
+          petName: donationInfo.petName,
+          petImage: donationInfo.petImage,
+          maxAmount: donationInfo.maxAmount,
+          lastDate: donationInfo.lastDate,
+          shortDescription: donationInfo.shortDescription,
+          longDescription: donationInfo.longDescription,
+        },
+      };
+      const result = await donationCampaigns.updateOne(filter, updateDoc);
       res.send(result);
     });
 
