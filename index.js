@@ -170,6 +170,14 @@ async function run() {
       res.send(result);
     });
 
+    //Get adoption request for specific user
+    app.get("/adoption-request/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { petOwnerInfo: email };
+      const result = await adoptionRequests.find(query).toArray();
+      res.send(result);
+    });
+
     /* ----------------------donation------------------------ */
     //get all donation campaigns
     app.get("/donation-campaigns", async (req, res) => {
@@ -263,7 +271,7 @@ async function run() {
     });
 
     //Get donation data for specific user (my donation page)
-    app.get("/my-donations/:email", async (req, res) => {
+    app.get("/my-donations/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { "donator.email": email };
       const result = await donations.find(query).toArray();
