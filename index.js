@@ -257,7 +257,7 @@ async function run() {
 
       //check the campaign status
       const campaign = await donationCampaigns.findOne(query);
-      if (campaign.status === "Paused")
+      if (campaign.status === "Pause")
         return res.status(400).send({
           message: "This campaign is paused now. Donation are not allowed!",
         });
@@ -282,9 +282,10 @@ async function run() {
         const id = req.params.id;
         const { donationAmount, status } = req.body;
         const filter = { _id: new ObjectId(id) };
+        let updateDoc;
 
         if (status === "decrease") {
-          let updateDoc = {
+          updateDoc = {
             $inc: { donatedAmount: -donationAmount },
           };
         } else {
@@ -337,6 +338,22 @@ async function run() {
           longDescription: donationInfo.longDescription,
         },
       };
+      const result = await donationCampaigns.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    //change donation campaign status (patch)
+    app.patch("/donation-status/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const { status } = req.body;
+
+      const updateDoc = {
+        $set: {
+          status: status,
+        },
+      };
+
       const result = await donationCampaigns.updateOne(filter, updateDoc);
       res.send(result);
     });
