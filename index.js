@@ -192,10 +192,31 @@ async function run() {
     });
 
     //Get adoption request for specific user
-    app.get("/adoption-request/:email", async (req, res) => {
+    app.get("/adoption-request/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { petOwnerInfo: email };
       const result = await adoptionRequests.find(query).toArray();
+      res.send(result);
+    });
+
+    //delete pet from db
+    app.delete("/delete-pet/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await petsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    //adopt pet (patch)
+    app.patch("/adopt-pet/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          adopted: true,
+        },
+      };
+      const result = await petsCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
