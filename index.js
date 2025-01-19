@@ -198,7 +198,6 @@ async function run() {
       res.send(result);
     });
 
-    //git commit--[change this]
     //save donation in db
     app.post("/donations", verifyToken, async (req, res) => {
       const { campaignId, donationAmount, donator } = req.body;
@@ -245,6 +244,14 @@ async function run() {
     app.get("/active-donations", async (req, res) => {
       const query = { status: "Active" };
       const result = await donationCampaigns.find(query).limit(3).toArray();
+      res.send(result);
+    });
+
+    //Get donation campaigns for specific user
+    app.get("/my-donation-campaigns/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { "askerInfo.email": email };
+      const result = await donationCampaigns.find(query).toArray();
       res.send(result);
     });
 
