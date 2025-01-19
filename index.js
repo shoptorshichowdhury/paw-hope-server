@@ -163,6 +163,27 @@ async function run() {
       res.send(result);
     });
 
+    //update a pet in db
+    app.put("/pets/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const petInfo = req.body;
+      const filter = { _id: new ObjectId(id) };
+
+      const updateDoc = {
+        $set: {
+          photo: petInfo.photo,
+          name: petInfo.name,
+          age: petInfo.age,
+          category: petInfo.category,
+          location: petInfo.location,
+          shortDescription: petInfo.shortDescription,
+          longDescription: petInfo.longDescription,
+        },
+      };
+      const result = await petsCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     //save adoption request to db
     app.post("/adoption-requests", verifyToken, async (req, res) => {
       const adoptionRequestData = req.body;
