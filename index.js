@@ -200,7 +200,8 @@ async function run() {
 
     //save donation in db
     app.post("/donations", verifyToken, async (req, res) => {
-      const { campaignId, donationAmount, donator } = req.body;
+      const { campaignId, donationAmount, donator, petName, petImage } =
+        req.body;
       const query = { _id: new ObjectId(campaignId) };
 
       //check the campaign status
@@ -211,7 +212,13 @@ async function run() {
         });
 
       //add the donation in donation collection
-      const donationInfo = { campaignId, donationAmount, donator };
+      const donationInfo = {
+        campaignId,
+        donationAmount,
+        petName,
+        petImage,
+        donator,
+      };
       const result = await donations.insertOne(donationInfo);
       res.send(result);
     });
@@ -248,10 +255,18 @@ async function run() {
     });
 
     //Get donation campaigns for specific user
-    app.get("/my-donation-campaigns/:email", async (req, res) => {
+    app.get("/my-donation-campaigns/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { "askerInfo.email": email };
       const result = await donationCampaigns.find(query).toArray();
+      res.send(result);
+    });
+
+    //Get donation data for specific user (my donation page)
+    app.get("/my-donations/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { "donator.email": email };
+      const result = await donations.find(query).toArray();
       res.send(result);
     });
 
