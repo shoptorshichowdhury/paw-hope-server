@@ -251,13 +251,8 @@ async function run() {
 
     //save donation in db
     app.post("/donations", verifyToken, async (req, res) => {
-      const {
-        campaignId,
-        donationAmount,
-        donator,
-        petName,
-        petImage,
-      } = req.body;
+      const { campaignId, donationAmount, donator, petName, petImage } =
+        req.body;
       const query = { _id: new ObjectId(campaignId) };
 
       //check the campaign status
@@ -280,10 +275,18 @@ async function run() {
     });
 
     //get donations for specific user (donation seeker)
-    app.get("/donator-list/:id", async (req, res) => {
+    app.get("/donator-list/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { campaignId: id };
       const result = await donations.find(query).toArray();
+      res.send(result);
+    });
+
+    //delete donatin from db
+    app.delete("/refund-donation/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await donations.deleteOne(query);
       res.send(result);
     });
 
