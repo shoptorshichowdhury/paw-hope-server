@@ -158,6 +158,25 @@ async function run() {
       res.send({ role: result?.role });
     });
 
+    //get all donation campaigns
+    app.get(
+      "/all-donation-campaigns",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const result = await donationCampaigns.find().toArray();
+        res.send(result);
+      }
+    );
+
+    //delete api for delete donation
+    app.delete("/donations/:id", verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await donationCampaigns.deleteOne(filter);
+      res.send(result);
+    });
+
     /* ---------------pets---------------- */
     //get all pets from db
     app.get("/pets", async (req, res) => {
@@ -273,7 +292,7 @@ async function run() {
     //adopt pet (patch)
     app.patch("/adopt-pet/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
-      const {status} = req.body;
+      const { status } = req.body;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
