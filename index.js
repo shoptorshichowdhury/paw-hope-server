@@ -88,6 +88,44 @@ async function run() {
       }
     });
 
+    //verify admin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.user?.email;
+      const query = { email };
+      const result = await userCollection.findOne(query);
+      if (!result || result?.role !== "admin")
+        return res
+          .status(403)
+          .send({ message: "Forbidden Access! Admin Only Actions!" });
+
+      next();
+    };
+
+    /*----------------- admin api--------------- */
+    //get all users for admin
+    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+
+    //make admin api
+    app.patch(
+      "/users/role/:email",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const email = req.params.email;
+        const filter = { email };
+        const updateDoc = {
+          $set: {
+            role: "admin",
+          },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      }
+    );
+
     //save/update user in db
     app.post("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -105,6 +143,13 @@ async function run() {
         role: "user",
       });
       res.send(result);
+    });
+
+    //Get user role
+    app.get("/users/role/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const result = await userCollection.findOne({ email });
+      res.send({ role: result?.role });
     });
 
     /* ---------------pets---------------- */
@@ -206,6 +251,18 @@ async function run() {
       const result = await petsCollection.deleteOne(query);
       res.send(result);
     });
+
+    //delete adoption request from db
+    app.delete(
+      "/delete-adoption-request/:id",
+      verifyToken,
+      async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await adoptionRequests.deleteOne(query);
+        res.send(result);
+      }
+    );
 
     //adopt pet (patch)
     app.patch("/adopt-pet/:id", verifyToken, async (req, res) => {
