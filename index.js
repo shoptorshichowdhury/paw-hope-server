@@ -11,7 +11,11 @@ const app = express();
 
 // middleware
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://localhost:5176"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5176",
+    "https://paw-hope.netlify.app",
+  ],
   credentials: true,
   optionSuccessStatus: 200,
 };
@@ -183,9 +187,13 @@ async function run() {
     app.get("/pets", async (req, res) => {
       const filter = req.query.filter;
       const search = req.query.search;
+      const page = parseInt(req.query._page) || 1;
+      const limit = 3;
+      const skip = (page - 1) * limit;
+
       let query = { adopted: false };
 
-      //For search
+      // For search
       if (search) {
         query.name = {
           $regex: search,
@@ -193,7 +201,7 @@ async function run() {
         };
       }
 
-      //For filter (category)
+      // For filter (category)
       if (filter) {
         query.category = filter;
       }
@@ -201,6 +209,8 @@ async function run() {
       const result = await petsCollection
         .find(query)
         .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
         .toArray();
 
       res.send(result);
@@ -307,10 +317,17 @@ async function run() {
     /* ----------------------donation------------------------ */
     //get all donation campaigns
     app.get("/donation-campaigns", async (req, res) => {
+      const page = parseInt(req.query._page) || 1;
+      const limit = 3;
+      const skip = (page - 1) * limit;
+
       const result = await donationCampaigns
         .find()
         .sort({ timestamp: -1 })
+        .skip(skip)
+        .limit(limit)
         .toArray();
+
       res.send(result);
     });
 
@@ -467,22 +484,22 @@ async function run() {
         return res.status(400).send({ message: "Donation amount not found!" });
       }
       const donateAmount = donationAmount * 100;
-      const {client_secret} = await stripe.paymentIntents.create({
+      const { client_secret } = await stripe.paymentIntents.create({
         amount: donateAmount,
-        currency: 'usd',
+        currency: "usd",
         automatic_payment_methods: {
           enabled: true,
         },
       });
-      res.send({clientSecret: client_secret})
+      res.send({ clientSecret: client_secret });
     });
 
     /* ------------------------------------------------ */
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
