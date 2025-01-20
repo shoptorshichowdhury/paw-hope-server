@@ -126,6 +126,12 @@ async function run() {
       }
     );
 
+    //get all pets
+    app.get("/all-pets", verifyToken, verifyAdmin, async (req, res) => {
+      const result = await petsCollection.find().toArray();
+      res.send(result);
+    });
+
     //save/update user in db
     app.post("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -267,10 +273,11 @@ async function run() {
     //adopt pet (patch)
     app.patch("/adopt-pet/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
+      const {status} = req.body;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          adopted: true,
+          adopted: status,
         },
       };
       const result = await petsCollection.updateOne(filter, updateDoc);
