@@ -4,6 +4,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
 const port = process.env.PORT || 5000;
 const app = express();
@@ -455,6 +456,25 @@ async function run() {
 
       const result = await donationCampaigns.updateOne(filter, updateDoc);
       res.send(result);
+    });
+
+    /* -----------------payment related--------------- */
+    //create payment intent
+    app.post("/create-payment-intent", verifyToken, async (req, res) => {
+      const { donationAmount } = req.body;
+
+      if (!donationAmount) {
+        return res.status(400).send({ message: "Donation amount not found!" });
+      }
+      const donateAmount = donationAmount * 100;
+      const {client_secret} = await stripe.paymentIntents.create({
+        amount: donateAmount,
+        currency: 'usd',
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+      res.send({clientSecret: client_secret})
     });
 
     /* ------------------------------------------------ */
