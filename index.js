@@ -500,6 +500,33 @@ async function run() {
       res.send({ clientSecret: client_secret });
     });
 
+    /* ------------------- Overview Stats ------------------------- */
+    app.get("/overview-stats/:email", async (req, res) => {
+      const email = req.params.email;
+      const totalPets = await petsCollection.countDocuments({
+        "petOwner.email": email,
+      });
+      const myDonationCampaigns = await donationCampaigns.countDocuments({
+        "askerInfo.email": email,
+      });
+      const myAdoptionRequests = await adoptionRequests.countDocuments({
+        petOwnerInfo: email,
+      });
+      const totalDonations = await donations.aggregate([
+          { $match: { "donator.email": email } },
+          { $group: { _id: null, totalAmount: { $sum: "$donationAmount" } } },
+        ])
+        .toArray();
+
+      res.send({
+        totalPets,
+        myDonationCampaigns,
+        myAdoptionRequests,
+        totalDonations:
+          totalDonations.length > 0 ? totalDonations[0].totalAmount : 0,
+      });
+    });
+
     /* ------------------------------------------------ */
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
