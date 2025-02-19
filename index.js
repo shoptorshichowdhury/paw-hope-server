@@ -187,8 +187,10 @@ async function run() {
     app.get("/pets", async (req, res) => {
       const filter = req.query.filter;
       const search = req.query.search;
+      const sort = req.query.sort;
+
       const page = parseInt(req.query._page) || 1;
-      const limit = 3;
+      const limit = 4;
       const skip = (page - 1) * limit;
 
       let query = { adopted: false };
@@ -206,9 +208,13 @@ async function run() {
         query.category = filter;
       }
 
+      //for sort
+      let options = {};
+      if (sort) options = { sort: { price: sort === "asc" ? 1 : -1 } };
+
       const result = await petsCollection
-        .find(query)
-        .sort({ timestamp: -1 })
+        .find(query, options)
+        // .sort({ timestamp: -1 })
         .skip(skip)
         .limit(limit)
         .toArray();
